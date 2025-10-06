@@ -3,216 +3,145 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🇸🇬 Singapore Air Quality Report (October 6, 2025)</title>
+  <title>🇸🇬 Singapore Air Quality Report</title>
 
-  <!-- ✅ External Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- ✅ Page Styles -->
+  <!-- Basic Styles -->
   <style>
     body {
-      font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
       margin: 0;
-      background: #f6f8fa;
-      color: #333;
+      padding: 0;
     }
 
     header {
-      background: #007bff;
+      background-color: #007bff;
       color: white;
-      padding: 20px 0;
       text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 10px 0;
     }
 
     main {
+      padding: 20px;
       max-width: 1000px;
-      margin: 30px auto;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      padding: 30px;
+      margin: 0 auto;
+      background-color: white;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
     }
 
     h2 {
       text-align: center;
-      margin-bottom: 20px;
       color: #007bff;
     }
 
-    canvas {
-      display: block;
-      max-width: 900px;
-      margin: 0 auto 30px;
-    }
-
-    #map {
-      height: 500px;
-      border-radius: 10px;
+    table {
+      width: 100%;
+      border-collapse: collapse;
       margin-top: 20px;
     }
 
-    .info {
+    th, td {
+      padding: 8px;
       text-align: center;
-      margin-bottom: 25px;
+      border: 1px solid #ddd;
     }
 
-    .info p {
-      margin: 6px 0;
+    th {
+      background-color: #007bff;
+      color: white;
     }
 
-    .healthy {
-      color: green;
-      font-weight: bold;
+    td {
+      background-color: #f9f9f9;
     }
 
     footer {
       text-align: center;
+      padding: 10px;
       font-size: 14px;
-      padding: 20px;
-      color: #666;
+      background-color: #007bff;
+      color: white;
     }
   </style>
 </head>
 <body>
 
-  <!-- ✅ Header -->
+  <!-- Header Section -->
   <header>
-    <h1>🇸🇬 Singapore Air Quality Report (October 6, 2025 – 20:00)</h1>
+    <h1>🇸🇬 Singapore Air Quality Report</h1>
+    <p>Real-time PSI Data from data.gov.sg</p>
   </header>
 
   <main>
-    <!-- ✅ Information Section -->
-    <div class="info">
-      <p>API Status: <span class="healthy">Healthy ✅</span></p>
-      <p>Last Updated: 2025-10-06 20:00 (SGT)</p>
-      <p>Data Source: <a href="https://data.gov.sg/dataset/psi" target="_blank">data.gov.sg</a></p>
-    </div>
+    <h2>Current Air Quality Readings</h2>
 
-    <!-- ✅ Chart -->
-    <h2>Air Quality Comparison by Region</h2>
-    <canvas id="aqiChart"></canvas>
-
-    <!-- ✅ Map -->
-    <h2>Map View</h2>
-    <div id="map"></div>
+    <!-- Table to display PSI data -->
+    <table id="psiTable">
+      <thead>
+        <tr>
+          <th>Reading Type</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Data will be inserted here by JavaScript -->
+      </tbody>
+    </table>
   </main>
 
   <footer>
-    © 2025 Singapore Air Quality Visualization | Powered by Chart.js + Leaflet
+    © 2025 Singapore Air Quality | Powered by data.gov.sg API
   </footer>
 
-  <!-- ✅ JavaScript Logic -->
+  <!-- JavaScript to Fetch and Display Data -->
   <script>
-    // ====== 1️⃣ Air Quality Data ======
-    const data = {
-      "region_metadata": [
-        { "name": "west", "label_location": { "latitude": 1.35735, "longitude": 103.7 } },
-        { "name": "east", "label_location": { "latitude": 1.35735, "longitude": 103.94 } },
-        { "name": "central", "label_location": { "latitude": 1.35735, "longitude": 103.82 } },
-        { "name": "south", "label_location": { "latitude": 1.29587, "longitude": 103.82 } },
-        { "name": "north", "label_location": { "latitude": 1.41803, "longitude": 103.82 } }
-      ],
-      "items": [{
-        "timestamp": "2025-10-06T20:00:00+08:00",
-        "readings": {
-          "psi_twenty_four_hourly": { "west": 58, "east": 59, "central": 62, "south": 53, "north": 56 },
-          "pm25_twenty_four_hourly": { "west": 18, "east": 19, "central": 22, "south": 14, "north": 16 }
-        }
-      }],
-      "api_info": { "status": "healthy" }
-    };
+    // API URL
+    const apiUrl = 'https://api.data.gov.sg/v1/environment/psi';
 
-    // ====== 2️⃣ Extract Data ======
-    const readings = data.items[0].readings;
-    const psi = readings.psi_twenty_four_hourly;
-    const pm25 = readings.pm25_twenty_four_hourly;
-    const regions = Object.keys(psi);
-    const psiValues = Object.values(psi);
-    const pm25Values = Object.values(pm25);
+    // Fetch Data from API
+    async function fetchData() {
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        
+        // Extract readings from the response
+        const readings = data.items[0].readings;
 
-    // ====== 3️⃣ Create Chart.js Graph ======
-    const ctx = document.getElementById("aqiChart").getContext("2d");
+        // List of reading types to display in the table
+        const readingTypes = [
+          'o3_sub_index', 'no2_one_hour_max', 'o3_eight_hour_max', 'psi_twenty_four_hourly',
+          'pm10_twenty_four_hourly', 'pm10_sub_index', 'pm25_twenty_four_hourly', 'so2_sub_index',
+          'pm25_sub_index', 'so2_twenty_four_hourly', 'co_eight_hour_max', 'co_sub_index'
+        ];
 
-    new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: regions.map(r => r.charAt(0).toUpperCase() + r.slice(1)),
-        datasets: [
-          {
-            label: "PSI (24-hr)",
-            data: psiValues,
-            backgroundColor: "rgba(54, 162, 235, 0.7)",
-            borderColor: "rgba(54, 162, 235, 1)",
-            borderWidth: 1
-          },
-          {
-            label: "PM2.5 (µg/m³)",
-            data: pm25Values,
-            type: "line",
-            borderColor: "rgba(255, 99, 132, 1)",
-            backgroundColor: "rgba(255, 99, 132, 0.3)",
-            tension: 0.3,
-            fill: false,
-            yAxisID: "y"
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: { display: true, text: "Index / Concentration" }
-          }
-        },
-        plugins: {
-          title: {
-            display: true,
-            text: "Regional Air Quality Comparison (PSI vs PM2.5)"
-          },
-          legend: {
-            position: "bottom"
-          }
-        }
+        // Get the table body element
+        const tableBody = document.querySelector('#psiTable tbody');
+
+        // Clear previous data in the table
+        tableBody.innerHTML = '';
+
+        // Iterate over each reading and insert it into the table
+        readingTypes.forEach(type => {
+          const row = document.createElement('tr');
+          const cell1 = document.createElement('td');
+          const cell2 = document.createElement('td');
+
+          cell1.textContent = type.replace(/_/g, ' ').toUpperCase();  // Display human-readable name
+          cell2.textContent = readings[type];  // Display the corresponding value
+
+          row.appendChild(cell1);
+          row.appendChild(cell2);
+          tableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error fetching PSI data:', error);
       }
-    });
+    }
 
-    // ====== 4️⃣ Create Leaflet Map ======
-    const map = L.map("map").setView([1.35, 103.82], 11);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors"
-    }).addTo(map);
-
-    data.region_metadata.forEach(region => {
-      const name = region.name;
-      const lat = region.label_location.latitude;
-      const lon = region.label_location.longitude;
-      const psiValue = psi[name];
-      const pm25Value = pm25[name];
-
-      // Marker color changes with PSI level
-      let color = "green";
-      if (psiValue > 50 && psiValue <= 100) color = "orange";
-      else if (psiValue > 100) color = "red";
-
-      const circle = L.circleMarker([lat, lon], {
-        color,
-        radius: 10,
-        fillOpacity: 0.7
-      }).addTo(map);
-
-      circle.bindPopup(`
-        <b>${name.charAt(0).toUpperCase() + name.slice(1)}</b><br>
-        PSI: ${psiValue}<br>
-        PM2.5: ${pm25Value} µg/m³
-      `);
-    });
+    // Call fetchData function when the page loads
+    window.onload = fetchData;
   </script>
 
 </body>
 </html>
-
